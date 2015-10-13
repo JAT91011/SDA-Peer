@@ -15,25 +15,27 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
+import javax.swing.UnsupportedLookAndFeelException;
 
 import utilidades.Propiedades;
 
 public class PanelConfiguracion extends JPanel {
 
-	private static final long serialVersionUID = 4959247560481979942L;
+	private static final long		serialVersionUID	= 4959247560481979942L;
 
-	private JTextField			txtIP;
-	private JTextField			txtPuerto;
-	private JLabel				lblRutaDescargas;
-	private JButton				btnExaminar;
-	private JTextField			txtRuta;
-	private JButton				btnGuardar;
-	private JLabel				lblIdioma;
-	private JComboBox<String>	cboIdioma;
-	private JLabel				lblApariencia;
-	private JComboBox<String>	cboApariencia;
+	private JTextField				txtIP;
+	private JTextField				txtPuerto;
+	private JLabel					lblRutaDescargas;
+	private JButton					btnExaminar;
+	private JTextField				txtRuta;
+	private JButton					btnGuardar;
+	private JLabel					lblIdioma;
+	private JComboBox<String>		cboIdioma;
+	private JLabel					lblApariencia;
+	private JComboBox<String>		cboApariencia;
 
 	private HashMap<String, String>	lookNFeelHashMap;
 	private String					currentLookAndFeel;
@@ -149,6 +151,7 @@ public class PanelConfiguracion extends JPanel {
 
 		cboApariencia = new JComboBox<String>(getAvailableLF());
 		cboApariencia.setFont(new Font("Tahoma", Font.PLAIN, 13));
+		cboApariencia.setSelectedItem(currentLookAndFeel);
 		GridBagConstraints gbc_cboApariencia = new GridBagConstraints();
 		gbc_cboApariencia.anchor = GridBagConstraints.WEST;
 		gbc_cboApariencia.insets = new Insets(5, 5, 5, 15);
@@ -162,14 +165,13 @@ public class PanelConfiguracion extends JPanel {
 				PanelConfiguracion.this.GuardarConfiguracion();
 			}
 		});
-		btnGuardar.setFont(new Font("Tahoma", Font.PLAIN, 13));
+		btnGuardar.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		GridBagConstraints gbc_btnGuardar = new GridBagConstraints();
 		gbc_btnGuardar.fill = GridBagConstraints.HORIZONTAL;
 		gbc_btnGuardar.insets = new Insets(15, 0, 15, 15);
 		gbc_btnGuardar.gridx = 2;
 		gbc_btnGuardar.gridy = 6;
 		add(btnGuardar, gbc_btnGuardar);
-
 	}
 
 	private Vector<String> getAvailableLF() {
@@ -189,6 +191,18 @@ public class PanelConfiguracion extends JPanel {
 	}
 
 	private void GuardarConfiguracion() {
-
+		Propiedades.setLookAndFeelClass(lookNFeelHashMap.get(cboApariencia.getSelectedItem()));
+		try {
+			UIManager.setLookAndFeel(lookNFeelHashMap.get(cboApariencia.getSelectedItem()));
+		} catch (ClassNotFoundException e1) {
+			e1.printStackTrace();
+		} catch (InstantiationException e1) {
+			e1.printStackTrace();
+		} catch (IllegalAccessException e1) {
+			e1.printStackTrace();
+		} catch (UnsupportedLookAndFeelException e1) {
+			e1.printStackTrace();
+		}
+		SwingUtilities.updateComponentTreeUI(Ventana.getInstance());
 	}
 }
