@@ -40,25 +40,18 @@ public class PanelConfiguracion extends JPanel {
 	private HashMap<String, String>	lookNFeelHashMap;
 	private String					currentLookAndFeel;
 
-	private static String			IPADDRESS_PATTERN	= "^([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\."
-																+ "([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\."
-																+ "([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\."
-																+ "([01]?\\d\\d?|2[0-4]\\d|25[0-5])$";
-
 	public PanelConfiguracion() {
 
 		GridBagLayout gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWidths = new int[] { 0, 0, 0, 0 };
 		gridBagLayout.rowHeights = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
-		gridBagLayout.columnWeights = new double[] { 0.0, 1.0, 0.0,
-				Double.MIN_VALUE };
-		gridBagLayout.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0,
-				0.0, Double.MIN_VALUE };
+		gridBagLayout.columnWeights = new double[] { 0.0, 1.0, 0.0, Double.MIN_VALUE };
+		gridBagLayout.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, Double.MIN_VALUE };
 		setLayout(gridBagLayout);
 
 		JLabel lblIP = new JLabel("Direcci\u00F3n IP:");
 		lblIP.setForeground(Color.BLACK);
-		lblIP.setFont(new Font("Dialog", Font.PLAIN, 14));
+		lblIP.setFont(new Font("Tahoma", Font.PLAIN, 13));
 		GridBagConstraints gbc_lblIP = new GridBagConstraints();
 		gbc_lblIP.anchor = GridBagConstraints.WEST;
 		gbc_lblIP.insets = new Insets(15, 15, 5, 5);
@@ -66,9 +59,9 @@ public class PanelConfiguracion extends JPanel {
 		gbc_lblIP.gridy = 0;
 		add(lblIP, gbc_lblIP);
 
-		txtIP = new JTextField(Propiedades.getIP());
+		txtIP = new JTextField();
 		txtIP.setForeground(Color.BLACK);
-		txtIP.setFont(new Font("Dialog", Font.PLAIN, 14));
+		txtIP.setFont(new Font("Tahoma", Font.PLAIN, 13));
 		GridBagConstraints gbc_txtIP = new GridBagConstraints();
 		gbc_txtIP.anchor = GridBagConstraints.WEST;
 		gbc_txtIP.insets = new Insets(15, 5, 5, 15);
@@ -79,7 +72,7 @@ public class PanelConfiguracion extends JPanel {
 
 		JLabel lblPuerto = new JLabel("Puerto:");
 		lblPuerto.setForeground(Color.BLACK);
-		lblPuerto.setFont(new Font("Dialog", Font.PLAIN, 14));
+		lblPuerto.setFont(new Font("Tahoma", Font.PLAIN, 13));
 		GridBagConstraints gbc_lblPuerto = new GridBagConstraints();
 		gbc_lblPuerto.anchor = GridBagConstraints.WEST;
 		gbc_lblPuerto.insets = new Insets(5, 15, 5, 5);
@@ -87,9 +80,9 @@ public class PanelConfiguracion extends JPanel {
 		gbc_lblPuerto.gridy = 1;
 		add(lblPuerto, gbc_lblPuerto);
 
-		txtPuerto = new JTextField(Integer.toString(Propiedades.getPort()));
+		txtPuerto = new JTextField();
 		txtPuerto.setForeground(Color.BLACK);
-		txtPuerto.setFont(new Font("Dialog", Font.PLAIN, 14));
+		txtPuerto.setFont(new Font("Tahoma", Font.PLAIN, 13));
 		txtPuerto.setColumns(20);
 		GridBagConstraints gbc_txtPuerto = new GridBagConstraints();
 		gbc_txtPuerto.insets = new Insets(5, 5, 5, 15);
@@ -100,7 +93,7 @@ public class PanelConfiguracion extends JPanel {
 
 		lblRutaDescargas = new JLabel("Ruta descargas:");
 		lblRutaDescargas.setForeground(Color.BLACK);
-		lblRutaDescargas.setFont(new Font("Dialog", Font.PLAIN, 14));
+		lblRutaDescargas.setFont(new Font("Tahoma", Font.PLAIN, 13));
 		GridBagConstraints gbc_lblRutaDescargas = new GridBagConstraints();
 		gbc_lblRutaDescargas.anchor = GridBagConstraints.EAST;
 		gbc_lblRutaDescargas.insets = new Insets(20, 15, 5, 5);
@@ -110,7 +103,7 @@ public class PanelConfiguracion extends JPanel {
 
 		txtRuta = new JTextField();
 		txtRuta.setForeground(Color.BLACK);
-		txtRuta.setFont(new Font("Dialog", Font.PLAIN, 14));
+		txtRuta.setFont(new Font("Tahoma", Font.PLAIN, 13));
 		txtRuta.setColumns(20);
 		GridBagConstraints gbc_txtRuta = new GridBagConstraints();
 		gbc_txtRuta.insets = new Insets(20, 5, 5, 5);
@@ -120,8 +113,7 @@ public class PanelConfiguracion extends JPanel {
 		add(txtRuta, gbc_txtRuta);
 
 		btnExaminar = new JButton("Examinar");
-		btnExaminar.setForeground(Color.BLACK);
-		btnExaminar.setFont(new Font("Dialog", Font.PLAIN, 14));
+		btnExaminar.setFont(new Font("Tahoma", Font.PLAIN, 13));
 		GridBagConstraints gbc_btnExaminar = new GridBagConstraints();
 		gbc_btnExaminar.insets = new Insets(20, 5, 5, 15);
 		gbc_btnExaminar.gridx = 2;
@@ -130,7 +122,7 @@ public class PanelConfiguracion extends JPanel {
 
 		lblIdioma = new JLabel("Idioma:");
 		lblIdioma.setForeground(Color.BLACK);
-		lblIdioma.setFont(new Font("Dialog", Font.PLAIN, 14));
+		lblIdioma.setFont(new Font("Tahoma", Font.PLAIN, 13));
 		GridBagConstraints gbc_lblIdioma = new GridBagConstraints();
 		gbc_lblIdioma.anchor = GridBagConstraints.WEST;
 		gbc_lblIdioma.insets = new Insets(20, 15, 5, 5);
@@ -139,8 +131,7 @@ public class PanelConfiguracion extends JPanel {
 		add(lblIdioma, gbc_lblIdioma);
 
 		cboIdioma = new JComboBox<String>();
-		cboIdioma.setForeground(Color.BLACK);
-		cboIdioma.setFont(new Font("Dialog", Font.PLAIN, 14));
+		cboIdioma.setFont(new Font("Tahoma", Font.PLAIN, 13));
 		GridBagConstraints gbc_cboIdioma = new GridBagConstraints();
 		gbc_cboIdioma.anchor = GridBagConstraints.WEST;
 		gbc_cboIdioma.insets = new Insets(20, 5, 5, 15);
@@ -150,7 +141,7 @@ public class PanelConfiguracion extends JPanel {
 
 		lblApariencia = new JLabel("Apariencia:");
 		lblApariencia.setForeground(Color.BLACK);
-		lblApariencia.setFont(new Font("Dialog", Font.PLAIN, 14));
+		lblApariencia.setFont(new Font("Tahoma", Font.PLAIN, 13));
 		GridBagConstraints gbc_lblApariencia = new GridBagConstraints();
 		gbc_lblApariencia.anchor = GridBagConstraints.WEST;
 		gbc_lblApariencia.insets = new Insets(5, 15, 5, 5);
@@ -159,8 +150,7 @@ public class PanelConfiguracion extends JPanel {
 		add(lblApariencia, gbc_lblApariencia);
 
 		cboApariencia = new JComboBox<String>(getAvailableLF());
-		cboApariencia.setForeground(Color.BLACK);
-		cboApariencia.setFont(new Font("Dialog", Font.PLAIN, 14));
+		cboApariencia.setFont(new Font("Tahoma", Font.PLAIN, 13));
 		cboApariencia.setSelectedItem(currentLookAndFeel);
 		GridBagConstraints gbc_cboApariencia = new GridBagConstraints();
 		gbc_cboApariencia.anchor = GridBagConstraints.WEST;
@@ -170,13 +160,12 @@ public class PanelConfiguracion extends JPanel {
 		add(cboApariencia, gbc_cboApariencia);
 
 		btnGuardar = new JButton("Guardar");
-		btnGuardar.setForeground(Color.BLACK);
 		btnGuardar.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				PanelConfiguracion.this.GuardarConfiguracion();
 			}
 		});
-		btnGuardar.setFont(new Font("Dialog", Font.PLAIN, 14));
+		btnGuardar.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		GridBagConstraints gbc_btnGuardar = new GridBagConstraints();
 		gbc_btnGuardar.fill = GridBagConstraints.HORIZONTAL;
 		gbc_btnGuardar.insets = new Insets(15, 0, 15, 15);
@@ -202,37 +191,18 @@ public class PanelConfiguracion extends JPanel {
 	}
 
 	private void GuardarConfiguracion() {
-
-		String ip = txtIP.getText().trim();
-		int port = Integer.parseInt(txtPuerto.getText().trim());
-		boolean correcto = true;
-
-		if (!ip.matches(IPADDRESS_PATTERN)) {
-			correcto = false;
+		Propiedades.setLookAndFeelClass(lookNFeelHashMap.get(cboApariencia.getSelectedItem()));
+		try {
+			UIManager.setLookAndFeel(lookNFeelHashMap.get(cboApariencia.getSelectedItem()));
+		} catch (ClassNotFoundException e1) {
+			e1.printStackTrace();
+		} catch (InstantiationException e1) {
+			e1.printStackTrace();
+		} catch (IllegalAccessException e1) {
+			e1.printStackTrace();
+		} catch (UnsupportedLookAndFeelException e1) {
+			e1.printStackTrace();
 		}
-
-		if (port > 65535) {
-			correcto = false;
-		}
-
-		if (correcto) {
-			Propiedades.setIP(ip);
-			Propiedades.setPort(port);
-			Propiedades.setLookAndFeelClass(lookNFeelHashMap.get(cboApariencia
-					.getSelectedItem()));
-			try {
-				UIManager.setLookAndFeel(lookNFeelHashMap.get(cboApariencia
-						.getSelectedItem()));
-			} catch (ClassNotFoundException e1) {
-				e1.printStackTrace();
-			} catch (InstantiationException e1) {
-				e1.printStackTrace();
-			} catch (IllegalAccessException e1) {
-				e1.printStackTrace();
-			} catch (UnsupportedLookAndFeelException e1) {
-				e1.printStackTrace();
-			}
-			SwingUtilities.updateComponentTreeUI(Ventana.getInstance());
-		}
+		SwingUtilities.updateComponentTreeUI(Ventana.getInstance());
 	}
 }
