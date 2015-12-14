@@ -20,7 +20,7 @@ public class Window extends JFrame {
 		setIconImage(null);
 		setSize(750, 500);
 		// setIconImage((new ImageIcon("icons/app-icon.png")).getImage());
-		setTitle("uTorrentFake");
+		setTitle("uTorrent");
 		setLocationRelativeTo(null);
 
 		this.slider = new JSlidePanel<JFrame>(this);
