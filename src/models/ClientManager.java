@@ -2,8 +2,8 @@ package models;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.MulticastSocket;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Observable;
@@ -29,7 +29,7 @@ public class ClientManager extends Observable implements Runnable {
 	private boolean					enable;
 	private boolean					connected;
 
-	private MulticastSocket			socket;
+	private DatagramSocket			socket;
 	private DatagramPacket			messageIn;
 	private byte[]					buffer;
 
@@ -42,7 +42,7 @@ public class ClientManager extends Observable implements Runnable {
 			this.ip = InetAddress.getByName(ip);
 			this.port = port;
 
-			this.socket = new MulticastSocket();
+			this.socket = new DatagramSocket();
 			this.enable = true;
 
 			this.readingThread = new Thread(this);
@@ -64,10 +64,10 @@ public class ClientManager extends Observable implements Runnable {
 
 	public boolean stop() {
 		try {
-			this.socket.leaveGroup(ip);
+			this.socket.close();
 			this.enable = false;
 			return true;
-		} catch (IOException e) {
+		} catch (Exception e) {
 			ErrorsLog.getInstance().writeLog(this.getClass().getName(), new Object() {
 			}.getClass().getEnclosingMethod().getName(), e.toString());
 			e.printStackTrace();
@@ -221,13 +221,10 @@ public class ClientManager extends Observable implements Runnable {
 
 	public void run() {
 		try {
-			System.out.println("1");
 			while (this.enable) {
-				System.out.println("2");
 				this.buffer = new byte[DATAGRAM_CONTENT_LENGTH + DATAGRAM_HEADER_LENGTH];
 				this.messageIn = new DatagramPacket(buffer, buffer.length);
 				this.socket.receive(messageIn);
-				System.out.println("3");
 				processData(this.buffer);
 			}
 		} catch (Exception e) {

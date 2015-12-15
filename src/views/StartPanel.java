@@ -50,7 +50,7 @@ public class StartPanel extends JPanel implements ActionListener {
 		gridBagLayout.rowWeights = new double[] { 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, Double.MIN_VALUE };
 		setLayout(gridBagLayout);
 
-		JLabel lblIpAddress = new JLabel("Direcci\u00F3n IP:");
+		JLabel lblIpAddress = new JLabel("IP Address Tracker:");
 		lblIpAddress.setForeground(Color.WHITE);
 		lblIpAddress.setFont(new Font("Microsoft Sans Serif", Font.PLAIN, 15));
 		GridBagConstraints gbc_lblIpAddress = new GridBagConstraints();
@@ -83,7 +83,7 @@ public class StartPanel extends JPanel implements ActionListener {
 		gbc_btnNewButton.gridy = 1;
 		add(btnNext, gbc_btnNewButton);
 
-		JLabel lblPortTrackers = new JLabel("Puerto Trackers:");
+		JLabel lblPortTrackers = new JLabel("Port Tracker:");
 		lblPortTrackers.setForeground(Color.WHITE);
 		lblPortTrackers.setFont(new Font("Microsoft Sans Serif", Font.PLAIN, 15));
 		GridBagConstraints gbc_lblPortTrackers = new GridBagConstraints();
@@ -135,7 +135,7 @@ public class StartPanel extends JPanel implements ActionListener {
 		panLoading.add(lblSpinner, gbc_lblSpinner);
 		lblSpinner.setText("");
 
-		lblMessage = new JLabel("Espera un momento...");
+		lblMessage = new JLabel("Receiving data...");
 		GridBagConstraints gbc_lblMessage = new GridBagConstraints();
 		gbc_lblMessage.anchor = GridBagConstraints.EAST;
 		gbc_lblMessage.gridx = 1;
@@ -143,7 +143,7 @@ public class StartPanel extends JPanel implements ActionListener {
 		panLoading.add(lblMessage, gbc_lblMessage);
 		lblMessage.setForeground(Color.WHITE);
 
-		JLabel lblSign = new JLabel("Creado por Jordan Aranda y Endika Salgueiro");
+		JLabel lblSign = new JLabel("Created by Jordan Aranda & Endika Salgueiro");
 		lblSign.setForeground(Color.WHITE);
 		GridBagConstraints gbc_lblSign = new GridBagConstraints();
 		gbc_lblSign.anchor = GridBagConstraints.EAST;
