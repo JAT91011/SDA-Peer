@@ -5,9 +5,10 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.Observable;
 
+import bitTorrent.tracker.protocol.udp.messages.BitTorrentUDPMessage;
+import bitTorrent.tracker.protocol.udp.messages.ConnectRequest;
 import utilities.ErrorsLog;
 
 public class ClientManager extends Observable implements Runnable {
@@ -49,8 +50,8 @@ public class ClientManager extends Observable implements Runnable {
 			this.readingThread.start();
 
 			while (!this.connected) {
-				sendData(createDatagram(NEW_CONNECTION, null)[0]);
-				Thread.sleep(3000);
+				sendData(new ConnectRequest());
+				Thread.sleep(2000);
 			}
 			System.out.println("Esta conectado");
 			return true;
@@ -87,99 +88,11 @@ public class ClientManager extends Observable implements Runnable {
 		}
 	}
 
-	/**
-	 * Se crea la trama de datos para enviar con el formato correcto
-	 * 
-	 * @param codigo
-	 *            Codigo de la trama
-	 * @param datos
-	 *            Datos que se van a enviar
-	 * @return Array con la trama formateada se utiliza un array bidimensional
-	 *         dado que la trama puede estar particionada
-	 */
-	public byte[][] createDatagram(int code, byte[] data) {
-		byte[][] datagrams = null;
+	public synchronized void sendData(final BitTorrentUDPMessage message) {
 		try {
-			int length = data != null ? data.length : 0;
-			int partitions = 0;
-			if (length < (DATAGRAM_CONTENT_LENGTH)) {
-				partitions = 1;
-			} else {
-				partitions = length / DATAGRAM_CONTENT_LENGTH;
-				if (length % DATAGRAM_CONTENT_LENGTH > 0) {
-					partitions++;
-				}
-			}
-
-			datagrams = new byte[partitions][DATAGRAM_CONTENT_LENGTH + DATAGRAM_HEADER_LENGTH];
-			for (int i = 0; i < partitions; i++) {
-
-				// CODE
-				byte[] codeArray = ByteBuffer.allocate(4).putInt(code).array();
-				datagrams[i][0] = codeArray[0];
-				datagrams[i][1] = codeArray[1];
-				datagrams[i][2] = codeArray[2];
-				datagrams[i][3] = codeArray[3];
-
-				// PARTITIONS
-				byte[] codePartitions = ByteBuffer.allocate(4).putInt(partitions).array();
-				datagrams[i][4] = codePartitions[0];
-				datagrams[i][5] = codePartitions[1];
-				datagrams[i][6] = codePartitions[2];
-				datagrams[i][7] = codePartitions[3];
-
-				// CURRENT PARTITION
-				byte[] codeCurrentPartition = ByteBuffer.allocate(4).putInt(i + 1).array();
-				datagrams[i][8] = codeCurrentPartition[0];
-				datagrams[i][9] = codeCurrentPartition[1];
-				datagrams[i][10] = codeCurrentPartition[2];
-				datagrams[i][11] = codeCurrentPartition[3];
-
-				// LENGTH
-				if (data != null) {
-					if (i + 1 == partitions) {
-						byte[] lengthArray = ByteBuffer.allocate(4).putInt(length).array();
-						datagrams[i][12] = lengthArray[0];
-						datagrams[i][13] = lengthArray[1];
-						datagrams[i][14] = lengthArray[2];
-						datagrams[i][15] = lengthArray[3];
-
-						for (int j = 0; j < length - (DATAGRAM_CONTENT_LENGTH * i); j++) {
-							datagrams[i][DATAGRAM_HEADER_LENGTH + j] = data[j + (DATAGRAM_CONTENT_LENGTH * i)];
-						}
-					} else {
-						byte[] lengthArray = ByteBuffer.allocate(4).putInt(DATAGRAM_CONTENT_LENGTH).array();
-						datagrams[i][12] = lengthArray[0];
-						datagrams[i][13] = lengthArray[1];
-						datagrams[i][14] = lengthArray[2];
-						datagrams[i][15] = lengthArray[3];
-
-						for (int j = DATAGRAM_CONTENT_LENGTH * i; j < DATAGRAM_CONTENT_LENGTH * (i + 1); j++) {
-							datagrams[i][DATAGRAM_HEADER_LENGTH + (j - (i * DATAGRAM_CONTENT_LENGTH))] = data[j];
-						}
-					}
-				}
-			}
-
-			// System.out.println("Datagrama creado");
-			// for (int i = 0; i < partitions; i++) {
-			// System.out.println("Datagrama " + (i + 1) + ": " +
-			// Arrays.toString(datagrams[i]));
-			// }
-
-		} catch (Exception e) {
-			ErrorsLog.getInstance().writeLog(this.getClass().getName(), new Object() {
-			}.getClass().getEnclosingMethod().getName(), e.toString());
-			e.printStackTrace();
-		}
-
-		return datagrams;
-	}
-
-	public synchronized void sendData(byte[] data) {
-		try {
-			DatagramPacket message = new DatagramPacket(data, data.length, this.ip, this.port);
-			socket.send(message);
+			DatagramPacket packet = new DatagramPacket(message.getBytes(), message.getBytes().length, this.ip,
+					this.port);
+			socket.send(packet);
 		} catch (IOException e) {
 			ErrorsLog.getInstance().writeLog(this.getClass().getName(), new Object() {
 			}.getClass().getEnclosingMethod().getName(), e.toString());
@@ -194,29 +107,19 @@ public class ClientManager extends Observable implements Runnable {
 		return instance;
 	}
 
-	public void processData(final byte[] data) {
+	public void processData(final DatagramPacket messageIn) {
 		try {
-			int code = ByteBuffer.wrap(Arrays.copyOfRange(data, 0, 4)).getInt();
-			System.out.println("Codigo recibido: " + code);
-			switch (code) {
-				case 0: // OK
-					if (!connected) {
-						connected = true;
-					} else {
-						// TODO Procesar announce
-					}
-					break;
-
-				case 99: // ERR
-
-					break;
+			ByteBuffer bufferReceive = ByteBuffer.wrap(messageIn.getData());
+			if (!connected) {
+				this.connected = true;
+			} else {
+				// TODO Procesar announce
 			}
 		} catch (Exception ex) {
 			ErrorsLog.getInstance().writeLog(this.getClass().getName(), new Object() {
 			}.getClass().getEnclosingMethod().getName(), ex.toString());
 			ex.printStackTrace();
 		}
-		// System.out.println("Datos recibidos: " + Arrays.toString(data));
 	}
 
 	public void run() {
@@ -224,8 +127,9 @@ public class ClientManager extends Observable implements Runnable {
 			while (this.enable) {
 				this.buffer = new byte[DATAGRAM_CONTENT_LENGTH + DATAGRAM_HEADER_LENGTH];
 				this.messageIn = new DatagramPacket(buffer, buffer.length);
+
 				this.socket.receive(messageIn);
-				processData(this.buffer);
+				processData(this.messageIn);
 			}
 		} catch (Exception e) {
 			ErrorsLog.getInstance().writeLog(this.getClass().getName(), new Object() {
