@@ -15,13 +15,7 @@ public class ClientManager extends Observable implements Runnable {
 
 	private static ClientManager	instance;
 
-	private static int				OK						= 0;
-	private static int				NEW_CONNECTION			= 1;
-	private static int				ANNOUNCE				= 2;
-	private static int				ERR						= 99;
-
-	private static int				DATAGRAM_CONTENT_LENGTH	= 2032;
-	private static int				DATAGRAM_HEADER_LENGTH	= 16;
+	private static int				DATAGRAM_LENGTH	= 2048;
 
 	private InetAddress				ip;
 	private int						port;
@@ -125,7 +119,7 @@ public class ClientManager extends Observable implements Runnable {
 	public void run() {
 		try {
 			while (this.enable) {
-				this.buffer = new byte[DATAGRAM_CONTENT_LENGTH + DATAGRAM_HEADER_LENGTH];
+				this.buffer = new byte[DATAGRAM_LENGTH];
 				this.messageIn = new DatagramPacket(buffer, buffer.length);
 
 				this.socket.receive(messageIn);
