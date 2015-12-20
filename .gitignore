@@ -42,4 +42,5 @@ Network Trash Folder
 Temporary Items
 .apdisk
 /bin/
-/data/errors
+/data/config.properties
+/lib/
