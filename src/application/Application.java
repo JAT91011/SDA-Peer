@@ -16,8 +16,7 @@ public class Application {
 			public void run() {
 				try {
 					UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
-					StartPanel panel = new StartPanel();
-					Window.getInstance().setContainer(new StartPanel());
+					Window.getInstance().setContentPane(new StartPanel());
 					Window.getInstance().setVisible(true);
 				} catch (Exception e) {
 					ErrorsLog.getInstance().writeLog(this.getClass().getName(), new Object() {

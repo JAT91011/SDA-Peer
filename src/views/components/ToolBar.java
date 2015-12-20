@@ -1,16 +1,27 @@
 package views.components;
 
+import java.awt.Cursor;
 import java.awt.Font;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.io.File;
+import java.util.regex.PatternSyntaxException;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.JToolBar;
+import javax.swing.RowFilter;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
+
+import utilities.FileChooser;
+import views.StartPanel;
+import views.Window;
 
 public class ToolBar extends JToolBar implements ActionListener {
 
@@ -30,26 +41,36 @@ public class ToolBar extends JToolBar implements ActionListener {
 		btnAdd = new JButton(new ImageIcon("icons/add-icon.png"));
 		btnAdd.setFocusable(false);
 		btnAdd.setToolTipText("Add torrent");
+		btnAdd.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		btnAdd.setFocusPainted(false);
 		btnAdd.addActionListener(this);
 
 		btnRemove = new JButton(new ImageIcon("icons/remove-icon.png"));
 		btnRemove.setFocusable(false);
 		btnRemove.setToolTipText("Remove torrent");
+		btnRemove.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		btnRemove.setFocusPainted(false);
 		btnRemove.addActionListener(this);
 
 		btnPlay = new JButton(new ImageIcon("icons/play-icon.png"));
 		btnPlay.setFocusable(false);
 		btnPlay.setToolTipText("Start");
+		btnPlay.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		btnPlay.setFocusPainted(false);
 		btnPlay.addActionListener(this);
 
 		btnPause = new JButton(new ImageIcon("icons/pause-icon.png"));
 		btnPause.setFocusable(false);
 		btnPause.setToolTipText("Pause");
+		btnPause.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		btnPause.setFocusPainted(false);
 		btnPause.addActionListener(this);
 
 		btnStop = new JButton(new ImageIcon("icons/stop-icon.png"));
 		btnStop.setFocusable(false);
 		btnStop.setToolTipText("Stop");
+		btnStop.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		btnStop.setFocusPainted(false);
 		btnStop.addActionListener(this);
 
 		lblFilter = new JLabel(" Filter  ");
@@ -61,31 +82,23 @@ public class ToolBar extends JToolBar implements ActionListener {
 
 			@Override
 			public void keyTyped(final java.awt.event.KeyEvent e) {
-				// final Start startPanel = (Start)
-				// Window.getInstance().getContentPane();
-				// final JTabbedPane tabs = startPanel.getTabbedPane();
-				//
-				// final int index = tabs.getSelectedIndex();
-				// if (index >= 0) {
-				// final LangEditor langEditor =
-				// startPanel.getLangEditors().get(index);
-				// final JTable table = langEditor.getTable();
-				//
-				// final TableRowSorter<TableModel> sorter = new
-				// TableRowSorter<TableModel>(
-				// (TableModel) table.getModel());
-				// table.setRowSorter(sorter);
-				// final String word = textField_Find.getText().trim();
-				// if (word.length() == 0) {
-				// sorter.setRowFilter(null);
-				// } else {
-				// try {
-				// sorter.setRowFilter(RowFilter.regexFilter(word));
-				// } catch (final PatternSyntaxException pse) {
-				// System.err.println("Bad regex pattern");
-				// }
-				// }
-				// }
+				final StartPanel startPanel = (StartPanel) Window.getInstance().getContentPane();
+
+				final JTable table = startPanel.getTable();
+
+				final TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>((TableModel) table.getModel());
+				table.setRowSorter(sorter);
+				final String word = textField_Find.getText().trim();
+				if (word.length() == 0) {
+					sorter.setRowFilter(null);
+				} else {
+					try {
+						sorter.setRowFilter(RowFilter.regexFilter(word));
+					} catch (final PatternSyntaxException pse) {
+						System.err.println("Bad regex pattern");
+					}
+				}
+
 			}
 
 			@Override
@@ -98,10 +111,10 @@ public class ToolBar extends JToolBar implements ActionListener {
 
 		add(btnAdd);
 		add(btnRemove);
+		addSeparator();
 		add(btnPlay);
 		add(btnPause);
 		add(btnStop);
-		addSeparator();
 		addSeparator();
 		add(lblFilter);
 		add(textField_Find);
@@ -109,25 +122,52 @@ public class ToolBar extends JToolBar implements ActionListener {
 
 	@Override
 	public void actionPerformed(final ActionEvent e) {
-		// final Start startPanel = (Start)
-		// Window.getInstance().getContentPane();
-		// final JTabbedPane tPane = startPanel.getTabbedPane();
-		// final Vector<LangEditor> langEditors = startPanel.getLangEditors();
-		//
-		// if (e.getSource() == btnNewFile) {
-		// newLangAction(tPane, langEditors);
-		// } else if (e.getSource() == btnOpenFile) {
-		// openAction(tPane, langEditors);
-		// } else if (e.getSource() == btnSaveFile) {
-		// saveAction(tPane, langEditors);
-		// } else if (e.getSource() == btnSaveAsFile) {
-		// saveAsAction(tPane, langEditors);
-		// } else if (e.getSource() == btnPrint) {
-		// printAction(tPane, startPanel);
-		// } else if (e.getSource() == btnAddRow) {
-		// addRowAction(tPane);
-		// } else if (e.getSource() == btnRemoveRow) {
-		// removeRowAction(tPane);
-		// }
+		final StartPanel startPanel = (StartPanel) Window.getInstance().getContentPane();
+
+		if (e.getSource() == btnAdd) {
+			addTorrent(startPanel);
+		} else if (e.getSource() == btnRemove) {
+			removeTorrent(startPanel);
+		} else if (e.getSource() == btnPlay) {
+			play(startPanel);
+		} else if (e.getSource() == btnPause) {
+			pause(startPanel);
+		} else if (e.getSource() == btnStop) {
+			stop(startPanel);
+		}
+	}
+
+	private void addTorrent(StartPanel startPanel) {
+		final File file = FileChooser.openFile("Torrent file", ".torrent");
+		if (file != null) {
+			System.out.println("Fichero: " + file.toString());
+			// Se comprueba si ya esta en la lista
+		}
+	}
+
+	private void removeTorrent(StartPanel startPanel) {
+		// Se comprueba si hay alguna fila seleccionada
+		if (startPanel.getTable().getSelectedRowCount() > 0) {
+			// Se quita el archivo
+		}
+
+	}
+
+	private void play(StartPanel startPanel) {
+		// Se arrancan todos los torrents
+
+	}
+
+	private void pause(StartPanel startPanel) {
+		// Se comprueba si hay alguna fila seleccionada
+		if (startPanel.getTable().getSelectedRowCount() > 0) {
+			// Se detiene el torrent
+		}
+
+	}
+
+	private void stop(StartPanel startPanel) {
+		// Se paran todos los torrents
+
 	}
 }
