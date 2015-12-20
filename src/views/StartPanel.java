@@ -5,7 +5,6 @@ import java.awt.Color;
 import java.awt.Font;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.swing.JPanel;
@@ -27,12 +26,10 @@ public class StartPanel extends JPanel implements Observer {
 
 	private String[]									header;
 
-	private Vector<MetainfoFile<?>>						contents;
 	private ConcurrentHashMap<String, ClientManager>	clientManagers;
 
 	public StartPanel() {
 
-		this.contents = new Vector<MetainfoFile<?>>();
 		this.clientManagers = new ConcurrentHashMap<String, ClientManager>();
 
 		setLayout(new BorderLayout(0, 0));
@@ -77,17 +74,15 @@ public class StartPanel extends JPanel implements Observer {
 	}
 
 	public String addContent(final MetainfoFile<?> newContent) {
-		for (MetainfoFile<?> content : contents) {
-			if (content.getInfo().getHexInfoHash().equals(newContent.getInfo().getHexInfoHash())) {
-				return "El torrent ya ha sido añadido";
-			}
+
+		if (clientManagers.containsKey(newContent.getInfo().getHexInfoHash())) {
+			return "El torrent ya ha sido añadido";
 		}
 
 		if (newContent.getUDPAnnounceList().size() == 0) {
 			return "No se ha encontrado una dirección UDP";
 		}
 
-		this.contents.add(newContent);
 		final String[] data = new String[6];
 		data[0] = Integer.toString(this.table.getRowCount() + 1);
 		data[1] = newContent.getInfo().getName();
@@ -103,15 +98,38 @@ public class StartPanel extends JPanel implements Observer {
 		System.out.println("IP: " + ip);
 		System.out.println("PORT: " + port);
 
-		ClientManager clientManager = new ClientManager(ip, Integer.parseInt(port));
-		this.clientManagers.put(newContent.getInfo().getHexInfoHash(), clientManager);
-		clientManager.start();
+		new ConnectThread(this, ip, Integer.parseInt(port), newContent).start();
 
 		return "";
+	}
+
+	public ConcurrentHashMap<String, ClientManager> getClientManagers() {
+		return clientManagers;
 	}
 
 	@Override
 	public void update(Observable o, Object arg) {
 
+	}
+}
+
+class ConnectThread extends Thread {
+
+	private String			ip;
+	private int				port;
+	private StartPanel		startPanel;
+	private MetainfoFile<?>	content;
+
+	public ConnectThread(final StartPanel startPanel, final String ip, final int port, final MetainfoFile<?> content) {
+		this.startPanel = startPanel;
+		this.ip = ip;
+		this.port = port;
+		this.content = content;
+	}
+
+	public void run() {
+		ClientManager clientManager = new ClientManager(ip, port, content);
+		this.startPanel.getClientManagers().put(content.getInfo().getHexInfoHash(), clientManager);
+		clientManager.start();
 	}
 }
