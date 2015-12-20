@@ -4,56 +4,65 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.Observable;
+import java.util.Random;
 
 import bitTorrent.tracker.protocol.udp.messages.BitTorrentUDPMessage;
+import bitTorrent.tracker.protocol.udp.messages.BitTorrentUDPMessage.Action;
 import bitTorrent.tracker.protocol.udp.messages.ConnectRequest;
+import bitTorrent.tracker.protocol.udp.messages.ConnectResponse;
 import utilities.ErrorsLog;
 
 public class ClientManager extends Observable implements Runnable {
 
-	private static ClientManager	instance;
+	private static int		DATAGRAM_LENGTH	= 2048;
 
-	private static int				DATAGRAM_LENGTH	= 2048;
+	private InetAddress		ip;
+	private int				port;
 
-	private InetAddress				ip;
-	private int						port;
+	private Thread			readingThread;
+	private boolean			enable;
+	private boolean			connected;
 
-	private Thread					readingThread;
-	private boolean					enable;
-	private boolean					connected;
+	private DatagramSocket	socket;
+	private DatagramPacket	messageIn;
+	private byte[]			buffer;
 
-	private DatagramSocket			socket;
-	private DatagramPacket			messageIn;
-	private byte[]					buffer;
+	private int				transactionID;
 
-	private ClientManager() {
-
-	}
-
-	public boolean start(final String ip, final int port) {
+	public ClientManager(final String ip, final int port) {
 		try {
 			this.ip = InetAddress.getByName(ip);
 			this.port = port;
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		}
+	}
 
+	public void start() {
+		try {
 			this.socket = new DatagramSocket();
 			this.enable = true;
 
 			this.readingThread = new Thread(this);
 			this.readingThread.start();
 
+			Random random = new Random();
+			this.transactionID = random.nextInt(Integer.MAX_VALUE);
+			ConnectRequest request = new ConnectRequest();
+			request.setTransactionId(transactionID);
+
 			while (!this.connected) {
-				sendData(new ConnectRequest());
-				Thread.sleep(2000);
+				sendData(request);
+				Thread.sleep(5000);
 			}
 			System.out.println("Esta conectado");
-			return true;
 		} catch (Exception e) {
 			ErrorsLog.getInstance().writeLog(this.getClass().getName(), new Object() {
 			}.getClass().getEnclosingMethod().getName(), e.toString());
 			e.printStackTrace();
-			return false;
 		}
 	}
 
@@ -94,21 +103,35 @@ public class ClientManager extends Observable implements Runnable {
 		}
 	}
 
-	public static ClientManager getInstance() {
-		if (instance == null) {
-			instance = new ClientManager();
-		}
-		return instance;
-	}
-
 	public void processData(final DatagramPacket messageIn) {
 		try {
 			ByteBuffer bufferReceive = ByteBuffer.wrap(messageIn.getData());
-			if (!connected) {
-				this.connected = true;
-			} else {
-				// TODO Procesar announce
+			Action action = Action.valueOf(bufferReceive.getInt(0));
+			switch (action) {
+				case ANNOUNCE:
+
+					break;
+
+				case CONNECT:
+					ConnectResponse connectResponse = ConnectResponse.parse(messageIn.getData());
+					System.out.println(connectResponse.toString());
+					if (connectResponse.getTransactionId() == this.transactionID) {
+						this.connected = true;
+					}
+					break;
+
+				case ERROR:
+					System.out.println("ERROR");
+					break;
+
+				case SCRAPE:
+					System.out.println("SCRAPE");
+					break;
+
+				default:
+					break;
 			}
+
 		} catch (Exception ex) {
 			ErrorsLog.getInstance().writeLog(this.getClass().getName(), new Object() {
 			}.getClass().getEnclosingMethod().getName(), ex.toString());

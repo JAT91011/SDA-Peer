@@ -6,6 +6,7 @@ import java.awt.Font;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -13,23 +14,27 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
 import bitTorrent.metainfo.MetainfoFile;
+import models.ClientManager;
 import views.components.ToolBar;
 
 public class StartPanel extends JPanel implements Observer {
 
-	private static final long		serialVersionUID	= 4986034677227823532L;
+	private static final long							serialVersionUID	= 4986034677227823532L;
 
-	private final ToolBar			toolBar;
-	private JTable					table;
-	private DefaultTableModel		modelTable;
+	private final ToolBar								toolBar;
+	private JTable										table;
+	private DefaultTableModel							modelTable;
 
-	private String[]				header;
+	private String[]									header;
 
-	private Vector<MetainfoFile<?>>	contents;
+	private Vector<MetainfoFile<?>>						contents;
+	private ConcurrentHashMap<String, ClientManager>	clientManagers;
 
 	public StartPanel() {
 
 		this.contents = new Vector<MetainfoFile<?>>();
+		this.clientManagers = new ConcurrentHashMap<String, ClientManager>();
+
 		setLayout(new BorderLayout(0, 0));
 
 		toolBar = new ToolBar();
@@ -71,19 +76,38 @@ public class StartPanel extends JPanel implements Observer {
 		return this.table;
 	}
 
-	public boolean addContent(final MetainfoFile<?> newContent) {
+	public String addContent(final MetainfoFile<?> newContent) {
 		for (MetainfoFile<?> content : contents) {
 			if (content.getInfo().getHexInfoHash().equals(newContent.getInfo().getHexInfoHash())) {
-				return false;
+				return "El torrent ya ha sido añadido";
 			}
 		}
+
+		if (newContent.getUDPAnnounceList().size() == 0) {
+			return "No se ha encontrado una dirección UDP";
+		}
+
 		this.contents.add(newContent);
 		final String[] data = new String[6];
 		data[0] = Integer.toString(this.table.getRowCount() + 1);
 		data[1] = newContent.getInfo().getName();
 		data[2] = Integer.toString(newContent.getInfo().getLength());
 		this.modelTable.addRow(data);
-		return true;
+
+		String[] aux = newContent.getUDPAnnounceList().get(0).split("/");
+
+		System.out.println("AUX: " + aux[2]);
+		String ip = aux[2].split(":")[0];
+		String port = aux[2].split(":")[1];
+
+		System.out.println("IP: " + ip);
+		System.out.println("PORT: " + port);
+
+		ClientManager clientManager = new ClientManager(ip, Integer.parseInt(port));
+		this.clientManagers.put(newContent.getInfo().getHexInfoHash(), clientManager);
+		clientManager.start();
+
+		return "";
 	}
 
 	@Override

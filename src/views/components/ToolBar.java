@@ -101,7 +101,6 @@ public class ToolBar extends JToolBar implements ActionListener {
 						System.err.println("Bad regex pattern");
 					}
 				}
-
 			}
 
 			@Override
@@ -155,8 +154,9 @@ public class ToolBar extends JToolBar implements ActionListener {
 			if (handler != null) {
 				System.out.println("#######################################\n" + file.getPath());
 				System.out.println(handler.getMetainfo());
-				if (!startPanel.addContent(handler.getMetainfo())) {
-					System.out.println("El torrent ya ha sido añadido");
+				String result = startPanel.addContent(handler.getMetainfo());
+				if (!result.isEmpty()) {
+					System.out.println(result);
 				}
 			}
 		}
