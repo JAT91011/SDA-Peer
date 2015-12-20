@@ -19,6 +19,9 @@ import javax.swing.RowFilter;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
+import bitTorrent.metainfo.handler.MetainfoHandler;
+import bitTorrent.metainfo.handler.MetainfoHandlerMultipleFile;
+import bitTorrent.metainfo.handler.MetainfoHandlerSingleFile;
 import utilities.FileChooser;
 import views.StartPanel;
 import views.Window;
@@ -138,10 +141,24 @@ public class ToolBar extends JToolBar implements ActionListener {
 	}
 
 	private void addTorrent(StartPanel startPanel) {
-		final File file = FileChooser.openFile("Torrent file", ".torrent");
+		final File file = FileChooser.openFile("Torrent file", "torrent");
 		if (file != null) {
-			System.out.println("Fichero: " + file.toString());
-			// Se comprueba si ya esta en la lista
+			MetainfoHandler<?> handler = null;
+			try {
+				handler = new MetainfoHandlerSingleFile();
+				handler.parseTorrenFile(file.getPath());
+			} catch (Exception ex) {
+				handler = new MetainfoHandlerMultipleFile();
+				handler.parseTorrenFile(file.getPath());
+			}
+
+			if (handler != null) {
+				System.out.println("#######################################\n" + file.getPath());
+				System.out.println(handler.getMetainfo());
+				if (!startPanel.addContent(handler.getMetainfo())) {
+					System.out.println("El torrent ya ha sido añadido");
+				}
+			}
 		}
 	}
 
