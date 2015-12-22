@@ -14,6 +14,7 @@ import javax.swing.table.DefaultTableModel;
 
 import bitTorrent.metainfo.MetainfoFile;
 import models.ClientManager;
+import utilities.ErrorsLog;
 import views.components.ToolBar;
 
 public class StartPanel extends JPanel implements Observer {
@@ -87,6 +88,7 @@ public class StartPanel extends JPanel implements Observer {
 		data[0] = Integer.toString(this.table.getRowCount() + 1);
 		data[1] = newContent.getInfo().getName();
 		data[2] = Integer.toString(newContent.getInfo().getLength());
+		data[3] = "Connecting";
 		this.modelTable.addRow(data);
 
 		String[] aux = newContent.getUDPAnnounceList().get(0).split("/");
@@ -109,7 +111,32 @@ public class StartPanel extends JPanel implements Observer {
 
 	@Override
 	public void update(Observable o, Object arg) {
+		try {
+			ClientManager clientManager = (ClientManager) o;
 
+			int row = 0;
+			while (row < this.modelTable.getRowCount()) {
+				if (this.table.getModel().getValueAt(row, 1).equals(clientManager.getInfo().getInfo().getName())) {
+					break;
+				} else {
+					row++;
+				}
+			}
+
+			this.table.getModel().setValueAt(clientManager.getContent().getSeeders(), row, 4);
+			this.table.getModel().setValueAt(clientManager.getContent().getLeechers(), row, 5);
+
+			if (clientManager.getContent().getSeeders() > 0) {
+				this.table.getModel().setValueAt("Downloading", row, 3);
+			} else {
+				this.table.getModel().setValueAt("Waiting for seeds", row, 3);
+			}
+
+		} catch (Exception e) {
+			ErrorsLog.getInstance().writeLog(this.getClass().getName(), new Object() {
+			}.getClass().getEnclosingMethod().getName(), e.toString());
+			e.printStackTrace();
+		}
 	}
 }
 
@@ -129,6 +156,7 @@ class ConnectThread extends Thread {
 
 	public void run() {
 		ClientManager clientManager = new ClientManager(ip, port, content);
+		clientManager.addObserver(startPanel);
 		this.startPanel.getClientManagers().put(content.getInfo().getHexInfoHash(), clientManager);
 		clientManager.start();
 	}

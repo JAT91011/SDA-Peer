@@ -8,6 +8,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Observable;
 import java.util.Random;
 
@@ -21,7 +22,9 @@ import bitTorrent.tracker.protocol.udp.messages.BitTorrentUDPMessage;
 import bitTorrent.tracker.protocol.udp.messages.BitTorrentUDPMessage.Action;
 import bitTorrent.tracker.protocol.udp.messages.ConnectRequest;
 import bitTorrent.tracker.protocol.udp.messages.ConnectResponse;
+import bitTorrent.tracker.protocol.udp.messages.PeerInfo;
 import bitTorrent.util.ByteUtils;
+import entities.Content;
 import utilities.ErrorsLog;
 
 public class ClientManager extends Observable implements Runnable {
@@ -31,6 +34,7 @@ public class ClientManager extends Observable implements Runnable {
 
 	private InetAddress		ip;
 	private int				port;
+	private Content			content;
 	private MetainfoFile<?>	info;
 
 	private Thread			readingThread;
@@ -48,6 +52,9 @@ public class ClientManager extends Observable implements Runnable {
 
 	public ClientManager(final String ip, final int port, final MetainfoFile<?> info) {
 		try {
+			this.content = new Content();
+			this.content.setName(info.getInfo().getName());
+			this.content.setSize(info.getInfo().getLength());
 			this.ip = InetAddress.getByName(ip);
 			this.port = port;
 			this.info = info;
@@ -102,9 +109,11 @@ public class ClientManager extends Observable implements Runnable {
 		}
 	}
 
-	public synchronized void updateContents() {
+	public synchronized void updateContents(final List<PeerInfo> peers, final int leechers, final int seeders) {
 		try {
-			// TODO
+			this.content.setPeers(peers);
+			this.content.setLeechers(leechers);
+			this.content.setSeeders(seeders);
 			setChanged();
 			notifyObservers();
 		} catch (Exception ex) {
@@ -154,6 +163,10 @@ public class ClientManager extends Observable implements Runnable {
 		return info;
 	}
 
+	public Content getContent() {
+		return this.content;
+	}
+
 	public void processData(final DatagramPacket messageIn) {
 		try {
 			ByteBuffer bufferReceive = ByteBuffer.wrap(messageIn.getData());
@@ -171,6 +184,8 @@ public class ClientManager extends Observable implements Runnable {
 									+ " a " + (announceResponse.getInterval() + ERROR_TIME_MARGIN));
 							this.timerAnnounce.setDelay(announceResponse.getInterval() + ERROR_TIME_MARGIN);
 						}
+						updateContents(announceResponse.getPeers(), announceResponse.getLeechers(),
+								announceResponse.getSeeders());
 					}
 					break;
 
