@@ -20,7 +20,11 @@ public class FileChooser {
 	 * @return The file loaded
 	 */
 	public static File openFile(final String description, final String... extensions) {
-		final JFileChooser fileChooser = new JFileChooser();
+		String userhome = System.getProperty("user.home");
+		final JFileChooser fileChooser = new JFileChooser(userhome + "\\Downloads");
+		if (Properties.getLastPathSelected() != null) {
+			fileChooser.setCurrentDirectory(new File(Properties.getLastPathSelected()));
+		}
 		fileChooser.setFileFilter(new FileNameExtensionFilter(description, extensions));
 		fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 		String path = "";
@@ -28,6 +32,7 @@ public class FileChooser {
 		try {
 			if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
 				path = fileChooser.getSelectedFile().getAbsolutePath();
+				Properties.setLastPathSelected(path);
 				file = new File(path);
 			}
 		} catch (final Exception e) {

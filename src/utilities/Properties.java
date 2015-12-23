@@ -16,13 +16,13 @@ public class Properties implements Serializable {
 
 	private String				ip;
 	private int					portTracker;
-	private String				contents;
+	private String				lastPathSelected;
 
-	private Properties(final String ip, final int portTracker, final String contents) {
+	private Properties(final String ip, final int portTracker, final String lastPathSelected) {
 
 		this.ip = ip;
 		this.portTracker = portTracker;
-		this.contents = contents;
+		this.lastPathSelected = lastPathSelected;
 	}
 
 	private void update() {
@@ -33,7 +33,7 @@ public class Properties implements Serializable {
 			oos.close();
 		} catch (final IOException e) {
 			e.printStackTrace();
-			properties = new Properties("", 0, "downloads");
+			properties = new Properties("", 0, "");
 		}
 	}
 
@@ -47,7 +47,7 @@ public class Properties implements Serializable {
 			if (!(e instanceof FileNotFoundException)) {
 				e.printStackTrace();
 			}
-			properties = new Properties("", 0, "downloads");
+			properties = new Properties("", 0, "");
 			properties.update();
 		}
 	}
@@ -82,18 +82,19 @@ public class Properties implements Serializable {
 		properties.update();
 	}
 
-	public static String getContentsPath() {
+	public static String getLastPathSelected() {
 		if (properties == null) {
 			init();
 		}
-		return properties.contents;
+		return properties.lastPathSelected;
 	}
 
-	public static void setContentsPath(final String contents) {
+	public static void setLastPathSelected(String lastPathSelected) {
 		if (properties == null) {
 			init();
 		}
-		properties.contents = contents;
+		properties.lastPathSelected = lastPathSelected;
 		properties.update();
 	}
+
 }
