@@ -146,7 +146,7 @@ public class StartPanel extends JPanel implements Observer {
 
 		this.modelTablePeers = new DefaultTableModel();
 		this.modelTablePeers.setDataVector(data, headerPeers);
-		tablePeers.setModel(this.modelTablePeers);
+		this.tablePeers.setModel(this.modelTablePeers);
 	}
 
 	public JTable getTable() {
@@ -202,19 +202,16 @@ public class StartPanel extends JPanel implements Observer {
 				}
 			}
 
+			this.tableContents.getModel().setValueAt(contentManager.getStatus(), row, 3);
 			this.tableContents.getModel().setValueAt(contentManager.getSeeders(), row, 4);
 			this.tableContents.getModel().setValueAt(contentManager.getLeechers(), row, 5);
-
-			if (contentManager.getSeeders() > 0) {
-				this.tableContents.getModel().setValueAt("Downloading", row, 3);
-			} else {
-				this.tableContents.getModel().setValueAt("Waiting for seeds", row, 3);
-			}
 			tablePeers.setModel(this.modelTablePeers);
 
 			if (this.tableContents.getSelectedRow() > -1) {
 				if (this.tableContents.getModel().getValueAt(this.tableContents.getSelectedRow(), 1)
 						.equals(contentManager.getName())) {
+					this.contentsManagers.remove(contentManager.getInfo_hash());
+					this.contentsManagers.put(contentManager.getInfo_hash(), contentManager);
 					updatePeersTableData();
 				}
 			}
@@ -249,6 +246,5 @@ class ConnectThread extends Thread {
 		ContentManager contentManager = new ContentManager(ip, port, content);
 		contentManager.addObserver(startPanel);
 		this.startPanel.getContentsManagers().put(content.getInfo().getHexInfoHash(), contentManager);
-		contentManager.start();
 	}
 }

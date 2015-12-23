@@ -166,8 +166,9 @@ public class ToolBar extends JToolBar implements ActionListener {
 		// Se comprueba si hay alguna fila seleccionada
 		if (startPanel.getTable().getSelectedRowCount() > 0) {
 			// Se quita el archivo
-		}
+		} else {
 
+		}
 	}
 
 	private void play(StartPanel startPanel) {
@@ -179,6 +180,8 @@ public class ToolBar extends JToolBar implements ActionListener {
 		// Se comprueba si hay alguna fila seleccionada
 		if (startPanel.getTable().getSelectedRowCount() > 0) {
 			// Se detiene el torrent
+		} else {
+
 		}
 
 	}
