@@ -8,6 +8,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
 import java.util.Random;
@@ -24,18 +25,21 @@ import bitTorrent.tracker.protocol.udp.messages.ConnectRequest;
 import bitTorrent.tracker.protocol.udp.messages.ConnectResponse;
 import bitTorrent.tracker.protocol.udp.messages.PeerInfo;
 import bitTorrent.util.ByteUtils;
-import entities.Content;
 import utilities.ErrorsLog;
 
-public class ClientManager extends Observable implements Runnable {
+public class ContentManager extends Observable implements Runnable {
 
 	private static int		DATAGRAM_LENGTH		= 2048;
 	private static int		ERROR_TIME_MARGIN	= 500;
 
 	private InetAddress		ip;
 	private int				port;
-	private Content			content;
-	private MetainfoFile<?>	info;
+	private String			name;
+	private String			info_hash;
+	private long			size;
+	private int				leechers;
+	private int				seeders;
+	private List<PeerInfo>	peers;
 
 	private Thread			readingThread;
 	private boolean			enable;
@@ -50,14 +54,15 @@ public class ClientManager extends Observable implements Runnable {
 
 	private Timer			timerAnnounce;
 
-	public ClientManager(final String ip, final int port, final MetainfoFile<?> info) {
+	public ContentManager(final String ip, final int port, final MetainfoFile<?> info) {
 		try {
-			this.content = new Content();
-			this.content.setName(info.getInfo().getName());
-			this.content.setSize(info.getInfo().getLength());
+
 			this.ip = InetAddress.getByName(ip);
 			this.port = port;
-			this.info = info;
+			this.name = info.getInfo().getName();
+			this.info_hash = info.getInfo().getHexInfoHash();
+			this.size = info.getInfo().getLength();
+			this.peers = new ArrayList<PeerInfo>();
 
 			this.timerAnnounce = new Timer(3000, new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
@@ -111,9 +116,16 @@ public class ClientManager extends Observable implements Runnable {
 
 	public synchronized void updateContents(final List<PeerInfo> peers, final int leechers, final int seeders) {
 		try {
-			this.content.setPeers(peers);
-			this.content.setLeechers(leechers);
-			this.content.setSeeders(seeders);
+			// Se quitan los que tienen ip = 0 PROVISIONAL
+			List<PeerInfo> aux = new ArrayList<PeerInfo>();
+			for (PeerInfo peer : peers) {
+				if (peer.getIpAddress() != 0) {
+					aux.add(peer);
+				}
+			}
+			this.peers = aux;
+			this.leechers = leechers;
+			this.seeders = seeders;
 			setChanged();
 			notifyObservers();
 		} catch (Exception ex) {
@@ -127,12 +139,12 @@ public class ClientManager extends Observable implements Runnable {
 		AnnounceRequest announceRequest = new AnnounceRequest();
 		announceRequest.setConnectionId(this.connectionID);
 		announceRequest.setTransactionId(this.transactionID);
-		announceRequest.setInfoHash(this.info.getInfo().getHexInfoHash());
+		announceRequest.setInfoHash(this.info_hash);
 		// ¿?
 		announceRequest.setPeerId(ByteUtils.createPeerId());
 		announceRequest.setDownloaded(0);
 		announceRequest.setUploaded(0);
-		announceRequest.setLeft(this.info.getInfo().getLength());
+		announceRequest.setLeft(this.size);
 		// ¿?
 		announceRequest.setEvent(Event.STARTED);
 		// ¿?
@@ -159,22 +171,16 @@ public class ClientManager extends Observable implements Runnable {
 		}
 	}
 
-	public MetainfoFile<?> getInfo() {
-		return info;
-	}
-
-	public Content getContent() {
-		return this.content;
-	}
-
 	public void processData(final DatagramPacket messageIn) {
 		try {
 			ByteBuffer bufferReceive = ByteBuffer.wrap(messageIn.getData());
 			Action action = Action.valueOf(bufferReceive.getInt(0));
 			switch (action) {
 				case ANNOUNCE:
-					System.out.println("El peer recibe announce");
 					AnnounceResponse announceResponse = AnnounceResponse.parse(messageIn.getData());
+					System.out.println("Announce recibido para: " + this.name);
+					System.out.println("Seeders: " + announceResponse.getSeeders() + ", Leechers: "
+							+ announceResponse.getLeechers() + ", Peers: " + announceResponse.getPeers().size());
 					if (announceResponse.getTransactionId() == this.transactionID) {
 						// Se cambia el delay del timer si es distinto y se
 						// añade
@@ -230,5 +236,29 @@ public class ClientManager extends Observable implements Runnable {
 			}.getClass().getEnclosingMethod().getName(), e.toString());
 			e.printStackTrace();
 		}
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public String getInfo_hash() {
+		return info_hash;
+	}
+
+	public long getSize() {
+		return size;
+	}
+
+	public int getLeechers() {
+		return leechers;
+	}
+
+	public int getSeeders() {
+		return seeders;
+	}
+
+	public List<PeerInfo> getPeers() {
+		return peers;
 	}
 }

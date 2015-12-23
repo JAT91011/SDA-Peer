@@ -2,18 +2,27 @@ package views;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map.Entry;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
 import bitTorrent.metainfo.MetainfoFile;
-import models.ClientManager;
+import bitTorrent.tracker.protocol.udp.messages.PeerInfo;
+import bitTorrent.util.ByteUtils;
+import models.ContentManager;
 import utilities.ErrorsLog;
 import views.components.ToolBar;
 
@@ -22,61 +31,131 @@ public class StartPanel extends JPanel implements Observer {
 	private static final long							serialVersionUID	= 4986034677227823532L;
 
 	private final ToolBar								toolBar;
-	private JTable										table;
-	private DefaultTableModel							modelTable;
 
-	private String[]									header;
+	private String[]									headerContents;
+	private String[]									headerPeers;
 
-	private ConcurrentHashMap<String, ClientManager>	clientManagers;
+	private ConcurrentHashMap<String, ContentManager>	contentsManagers;
+
+	private JTable										tableContents;
+	private DefaultTableModel							modelTableContents;
+	private JTable										tablePeers;
+	private DefaultTableModel							modelTablePeers;
 
 	public StartPanel() {
 
-		this.clientManagers = new ConcurrentHashMap<String, ClientManager>();
+		this.contentsManagers = new ConcurrentHashMap<String, ContentManager>();
 
 		setLayout(new BorderLayout(0, 0));
 
 		toolBar = new ToolBar();
 		add(toolBar, BorderLayout.NORTH);
 
-		JScrollPane scrollPane = new JScrollPane();
-		add(scrollPane, BorderLayout.CENTER);
+		JSplitPane splitPane = new JSplitPane();
+		splitPane.setResizeWeight(0.7);
+		splitPane.setPreferredSize(new Dimension(0, 300));
+		splitPane.setSize(new Dimension(0, 300));
+		splitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
+		add(splitPane, BorderLayout.CENTER);
 
-		header = new String[6];
-		header[0] = "#";
-		header[1] = "Name";
-		header[2] = "Size";
-		header[3] = "Status";
-		header[4] = "Seeds";
-		header[5] = "Peers";
-		final String[][] content = new String[0][header.length];
+		JScrollPane scrollPaneTop = new JScrollPane();
+		splitPane.setLeftComponent(scrollPaneTop);
 
-		modelTable = new DefaultTableModel();
-		modelTable.setDataVector(content, header);
+		headerContents = new String[6];
+		headerContents[0] = "#";
+		headerContents[1] = "Name";
+		headerContents[2] = "Size";
+		headerContents[3] = "Status";
+		headerContents[4] = "Seeds";
+		headerContents[5] = "Peers";
 
-		table = new JTable(modelTable);
-		scrollPane.setViewportView(table);
+		modelTableContents = new DefaultTableModel();
+		modelTableContents.setDataVector(null, headerContents);
 
-		table.getTableHeader().setReorderingAllowed(false);
-		table.setShowVerticalLines(true);
-		table.setShowHorizontalLines(true);
-		table.setDragEnabled(false);
-		table.setSelectionForeground(Color.WHITE);
-		table.setSelectionBackground(Color.BLUE);
-		table.setForeground(Color.BLACK);
-		table.setBackground(Color.WHITE);
-		table.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 14));
-		table.setRowHeight(30);
+		tableContents = new JTable(modelTableContents);
+		tableContents.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (tableContents.getSelectedRow() > -1) {
+					updatePeersTableData();
+					// print first column value from selected row
+					System.out.println(tableContents.getSelectedRow());
+				}
+			}
+		});
+		scrollPaneTop.setViewportView(tableContents);
 
-		table.getTableHeader().setFont(new Font("Arial", Font.PLAIN, 15));
+		tableContents.getTableHeader().setReorderingAllowed(false);
+		tableContents.setShowVerticalLines(true);
+		tableContents.setShowHorizontalLines(true);
+		tableContents.setDragEnabled(false);
+		tableContents.setSelectionForeground(Color.WHITE);
+		tableContents.setSelectionBackground(Color.BLUE);
+		tableContents.setForeground(Color.BLACK);
+		tableContents.setBackground(Color.WHITE);
+		tableContents.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 14));
+		tableContents.setRowHeight(30);
+		tableContents.getTableHeader().setFont(new Font("Arial", Font.PLAIN, 15));
+
+		JScrollPane scrollPaneBottom = new JScrollPane();
+		splitPane.setRightComponent(scrollPaneBottom);
+
+		headerPeers = new String[3];
+		headerPeers[0] = "#";
+		headerPeers[1] = "IP";
+		headerPeers[2] = "Port";
+
+		modelTablePeers = new DefaultTableModel();
+		modelTablePeers.setDataVector(null, headerPeers);
+
+		tablePeers = new JTable(modelTablePeers);
+		scrollPaneBottom.setViewportView(tablePeers);
+		tablePeers.getTableHeader().setReorderingAllowed(false);
+		tablePeers.setShowVerticalLines(true);
+		tablePeers.setShowHorizontalLines(true);
+		tablePeers.setDragEnabled(false);
+		tablePeers.setSelectionForeground(Color.WHITE);
+		tablePeers.setSelectionBackground(Color.BLUE);
+		tablePeers.setForeground(Color.BLACK);
+		tablePeers.setBackground(Color.WHITE);
+		tablePeers.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 14));
+		tablePeers.setRowHeight(30);
+		tablePeers.getTableHeader().setFont(new Font("Arial", Font.PLAIN, 15));
+	}
+
+	private void updatePeersTableData() {
+
+		List<PeerInfo> peers = new ArrayList<PeerInfo>();
+		if (this.tableContents.getSelectedRow() > -1) {
+			for (Entry<String, ContentManager> entry : this.contentsManagers.entrySet()) {
+				if (entry.getValue().getName()
+						.equals(this.tableContents.getModel().getValueAt(this.tableContents.getSelectedRow(), 1))) {
+					peers = entry.getValue().getPeers();
+				}
+			}
+		}
+		System.out.println("FILAS: " + peers.size());
+
+		String[][] data = new String[peers.size()][this.headerPeers.length];
+
+		for (int i = 0; i < peers.size(); i++) {
+			data[i][0] = Integer.toString(i + 1);
+			data[i][1] = ByteUtils.toStringIpAddress(peers.get(i).getIpAddress());
+			data[i][2] = Integer.toString(peers.get(i).getPort());
+		}
+
+		this.modelTablePeers = new DefaultTableModel();
+		this.modelTablePeers.setDataVector(data, headerPeers);
+		tablePeers.setModel(this.modelTablePeers);
 	}
 
 	public JTable getTable() {
-		return this.table;
+		return this.tableContents;
 	}
 
 	public String addContent(final MetainfoFile<?> newContent) {
 
-		if (clientManagers.containsKey(newContent.getInfo().getHexInfoHash())) {
+		if (contentsManagers.containsKey(newContent.getInfo().getHexInfoHash())) {
 			return "El torrent ya ha sido añadido";
 		}
 
@@ -85,11 +164,11 @@ public class StartPanel extends JPanel implements Observer {
 		}
 
 		final String[] data = new String[6];
-		data[0] = Integer.toString(this.table.getRowCount() + 1);
+		data[0] = Integer.toString(this.tableContents.getRowCount() + 1);
 		data[1] = newContent.getInfo().getName();
-		data[2] = Integer.toString(newContent.getInfo().getLength());
+		data[2] = bytes2MegaBytes(newContent.getInfo().getLength()) + " MB.";
 		data[3] = "Connecting";
-		this.modelTable.addRow(data);
+		this.modelTableContents.addRow(data);
 
 		String[] aux = newContent.getUDPAnnounceList().get(0).split("/");
 
@@ -105,31 +184,39 @@ public class StartPanel extends JPanel implements Observer {
 		return "";
 	}
 
-	public ConcurrentHashMap<String, ClientManager> getClientManagers() {
-		return clientManagers;
+	private double bytes2MegaBytes(final int bytes) {
+		return (bytes / 1024) / 1024;
 	}
 
 	@Override
 	public void update(Observable o, Object arg) {
 		try {
-			ClientManager clientManager = (ClientManager) o;
+			ContentManager contentManager = (ContentManager) o;
 
 			int row = 0;
-			while (row < this.modelTable.getRowCount()) {
-				if (this.table.getModel().getValueAt(row, 1).equals(clientManager.getInfo().getInfo().getName())) {
+			while (row < this.modelTableContents.getRowCount()) {
+				if (this.tableContents.getModel().getValueAt(row, 1).equals(contentManager.getName())) {
 					break;
 				} else {
 					row++;
 				}
 			}
 
-			this.table.getModel().setValueAt(clientManager.getContent().getSeeders(), row, 4);
-			this.table.getModel().setValueAt(clientManager.getContent().getLeechers(), row, 5);
+			this.tableContents.getModel().setValueAt(contentManager.getSeeders(), row, 4);
+			this.tableContents.getModel().setValueAt(contentManager.getLeechers(), row, 5);
 
-			if (clientManager.getContent().getSeeders() > 0) {
-				this.table.getModel().setValueAt("Downloading", row, 3);
+			if (contentManager.getSeeders() > 0) {
+				this.tableContents.getModel().setValueAt("Downloading", row, 3);
 			} else {
-				this.table.getModel().setValueAt("Waiting for seeds", row, 3);
+				this.tableContents.getModel().setValueAt("Waiting for seeds", row, 3);
+			}
+			tablePeers.setModel(this.modelTablePeers);
+
+			if (this.tableContents.getSelectedRow() > -1) {
+				if (this.tableContents.getModel().getValueAt(this.tableContents.getSelectedRow(), 1)
+						.equals(contentManager.getName())) {
+					updatePeersTableData();
+				}
 			}
 
 		} catch (Exception e) {
@@ -137,6 +224,10 @@ public class StartPanel extends JPanel implements Observer {
 			}.getClass().getEnclosingMethod().getName(), e.toString());
 			e.printStackTrace();
 		}
+	}
+
+	public ConcurrentHashMap<String, ContentManager> getContentsManagers() {
+		return this.contentsManagers;
 	}
 }
 
@@ -155,9 +246,9 @@ class ConnectThread extends Thread {
 	}
 
 	public void run() {
-		ClientManager clientManager = new ClientManager(ip, port, content);
-		clientManager.addObserver(startPanel);
-		this.startPanel.getClientManagers().put(content.getInfo().getHexInfoHash(), clientManager);
-		clientManager.start();
+		ContentManager contentManager = new ContentManager(ip, port, content);
+		contentManager.addObserver(startPanel);
+		this.startPanel.getContentsManagers().put(content.getInfo().getHexInfoHash(), contentManager);
+		contentManager.start();
 	}
 }
