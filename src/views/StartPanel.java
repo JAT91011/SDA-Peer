@@ -22,6 +22,7 @@ import javax.swing.table.DefaultTableModel;
 import bitTorrent.metainfo.MetainfoFile;
 import bitTorrent.tracker.protocol.udp.messages.PeerInfo;
 import bitTorrent.util.ByteUtils;
+import models.ClientManager;
 import models.ContentManager;
 import utilities.ErrorsLog;
 import views.components.ToolBar;
@@ -78,8 +79,6 @@ public class StartPanel extends JPanel implements Observer {
 			public void mouseClicked(MouseEvent e) {
 				if (tableContents.getSelectedRow() > -1) {
 					updatePeersTableData();
-					// print first column value from selected row
-					System.out.println(tableContents.getSelectedRow());
 				}
 			}
 		});
@@ -225,6 +224,34 @@ public class StartPanel extends JPanel implements Observer {
 
 	public ConcurrentHashMap<String, ContentManager> getContentsManagers() {
 		return this.contentsManagers;
+	}
+
+	public void removeSelectedTorrent() {
+		int selectedRow = this.tableContents.getSelectedRow();
+		if (selectedRow > -1) {
+			String name = (String) this.tableContents.getModel().getValueAt(selectedRow, 1);
+			System.out.println(name);
+			ClientManager.getInstance().removeContent(name);
+			String info_hash = "";
+			for (Entry<String, ContentManager> entry : this.contentsManagers.entrySet()) {
+				if (entry.getValue().getName().equals(name)) {
+					entry.getValue().remove();
+					info_hash = entry.getKey();
+					break;
+				}
+			}
+			this.contentsManagers.remove(info_hash);
+			this.modelTableContents.removeRow(selectedRow);
+			if (selectedRow - 1 >= 0) {
+				this.tableContents.setRowSelectionInterval(selectedRow - 1, selectedRow - 1);
+				updatePeersTableData();
+			} else {
+				for (int i = 0; i < this.modelTablePeers.getRowCount(); i++) {
+					this.modelTablePeers = new DefaultTableModel(null, this.headerPeers);
+					this.tablePeers.setModel(this.modelTablePeers);
+				}
+			}
+		}
 	}
 }
 

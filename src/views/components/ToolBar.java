@@ -165,7 +165,7 @@ public class ToolBar extends JToolBar implements ActionListener {
 	private void removeTorrent(StartPanel startPanel) {
 		// Se comprueba si hay alguna fila seleccionada
 		if (startPanel.getTable().getSelectedRowCount() > 0) {
-			// Se quita el archivo
+			startPanel.removeSelectedTorrent();
 		} else {
 
 		}

@@ -77,6 +77,7 @@ public class ContentManager extends Observable {
 			this.timerAnnounce = new Timer(3000, new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					if (enable) {
+						System.out.println("Envia announce");
 						sendAnnounce();
 					} else {
 						ContentManager.this.status = Status.STOPPED;
@@ -87,6 +88,7 @@ public class ContentManager extends Observable {
 			this.timerConnect = new Timer(5000, new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					if (enable) {
+						System.out.println("Envia connect");
 						sendConnect();
 					} else {
 						ContentManager.this.status = Status.STOPPED;
@@ -144,6 +146,7 @@ public class ContentManager extends Observable {
 		for (PeerInfo peer : this.peers) {
 			if (peer.getIpAddress() != 0) {
 				aux.add(peer);
+				System.out.println("LLEGA: " + peer.getPort());
 			}
 		}
 
@@ -158,6 +161,12 @@ public class ContentManager extends Observable {
 		this.seeders = announceResponse.getSeeders();
 		setChanged();
 		notifyObservers();
+	}
+
+	public void remove() {
+		this.timerConnect.stop();
+		this.timerAnnounce.stop();
+		this.deleteObservers();
 	}
 
 	public int getTransactionID() {

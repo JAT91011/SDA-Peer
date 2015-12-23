@@ -5,6 +5,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
+import java.util.Map;
 import java.util.Observable;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -105,6 +106,18 @@ public class ClientManager extends Observable implements Runnable {
 
 	public boolean existTransactionID(final int transactionID) {
 		return this.contentsManagers.containsKey(transactionID);
+	}
+
+	public void removeContent(final String name) {
+		int transactionID = Integer.MIN_VALUE;
+		for (Map.Entry<Integer, ContentManager> entry : this.contentsManagers.entrySet()) {
+			if (entry.getValue().getName().equals(name)) {
+				entry.getValue().remove();
+				transactionID = entry.getKey();
+				break;
+			}
+		}
+		this.contentsManagers.remove(transactionID);
 	}
 
 	public void run() {
