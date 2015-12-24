@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.concurrent.ConcurrentHashMap;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -29,23 +28,19 @@ import views.components.ToolBar;
 
 public class StartPanel extends JPanel implements Observer {
 
-	private static final long							serialVersionUID	= 4986034677227823532L;
+	private static final long	serialVersionUID	= 4986034677227823532L;
 
-	private final ToolBar								toolBar;
+	private final ToolBar		toolBar;
 
-	private String[]									headerContents;
-	private String[]									headerPeers;
+	private String[]			headerContents;
+	private String[]			headerPeers;
 
-	private ConcurrentHashMap<String, ContentManager>	contentsManagers;
-
-	private JTable										tableContents;
-	private DefaultTableModel							modelTableContents;
-	private JTable										tablePeers;
-	private DefaultTableModel							modelTablePeers;
+	private JTable				tableContents;
+	private DefaultTableModel	modelTableContents;
+	private JTable				tablePeers;
+	private DefaultTableModel	modelTablePeers;
 
 	public StartPanel() {
-
-		this.contentsManagers = new ConcurrentHashMap<String, ContentManager>();
 
 		setLayout(new BorderLayout(0, 0));
 
@@ -126,7 +121,7 @@ public class StartPanel extends JPanel implements Observer {
 
 		List<PeerInfo> peers = new ArrayList<PeerInfo>();
 		if (this.tableContents.getSelectedRow() > -1) {
-			for (Entry<String, ContentManager> entry : this.contentsManagers.entrySet()) {
+			for (Entry<Integer, ContentManager> entry : ClientManager.getInstance().getContentsManagers().entrySet()) {
 				if (entry.getValue().getName()
 						.equals(this.tableContents.getModel().getValueAt(this.tableContents.getSelectedRow(), 1))) {
 					peers = entry.getValue().getPeers();
@@ -154,7 +149,7 @@ public class StartPanel extends JPanel implements Observer {
 
 	public String addContent(final MetainfoFile<?> newContent) {
 
-		if (contentsManagers.containsKey(newContent.getInfo().getHexInfoHash())) {
+		if (ClientManager.getInstance().existInfoHash(newContent.getInfo().getHexInfoHash())) {
 			return "El torrent ya ha sido añadido";
 		}
 
@@ -209,8 +204,6 @@ public class StartPanel extends JPanel implements Observer {
 			if (this.tableContents.getSelectedRow() > -1) {
 				if (this.tableContents.getModel().getValueAt(this.tableContents.getSelectedRow(), 1)
 						.equals(contentManager.getName())) {
-					this.contentsManagers.remove(contentManager.getInfo_hash());
-					this.contentsManagers.put(contentManager.getInfo_hash(), contentManager);
 					updatePeersTableData();
 				}
 			}
@@ -222,25 +215,11 @@ public class StartPanel extends JPanel implements Observer {
 		}
 	}
 
-	public ConcurrentHashMap<String, ContentManager> getContentsManagers() {
-		return this.contentsManagers;
-	}
-
 	public void removeSelectedTorrent() {
 		int selectedRow = this.tableContents.getSelectedRow();
 		if (selectedRow > -1) {
 			String name = (String) this.tableContents.getModel().getValueAt(selectedRow, 1);
-			System.out.println(name);
 			ClientManager.getInstance().removeContent(name);
-			String info_hash = "";
-			for (Entry<String, ContentManager> entry : this.contentsManagers.entrySet()) {
-				if (entry.getValue().getName().equals(name)) {
-					entry.getValue().remove();
-					info_hash = entry.getKey();
-					break;
-				}
-			}
-			this.contentsManagers.remove(info_hash);
 			this.modelTableContents.removeRow(selectedRow);
 			if (selectedRow - 1 >= 0) {
 				this.tableContents.setRowSelectionInterval(selectedRow - 1, selectedRow - 1);
@@ -251,6 +230,14 @@ public class StartPanel extends JPanel implements Observer {
 					this.tablePeers.setModel(this.modelTablePeers);
 				}
 			}
+		}
+	}
+
+	public void pauseSelectedTorrent() {
+		int selectedRow = this.tableContents.getSelectedRow();
+		if (selectedRow > -1) {
+			String name = (String) this.tableContents.getModel().getValueAt(selectedRow, 1);
+			ClientManager.getInstance().pauseContent(name);
 		}
 	}
 }
@@ -272,6 +259,5 @@ class ConnectThread extends Thread {
 	public void run() {
 		ContentManager contentManager = new ContentManager(ip, port, content);
 		contentManager.addObserver(startPanel);
-		this.startPanel.getContentsManagers().put(content.getInfo().getHexInfoHash(), contentManager);
 	}
 }

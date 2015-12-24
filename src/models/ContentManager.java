@@ -49,8 +49,6 @@ public class ContentManager extends Observable {
 	private int				seeders;
 	private List<PeerInfo>	peers;
 
-	private boolean			enable;
-
 	private long			connectionID;
 	private int				transactionID;
 
@@ -63,6 +61,7 @@ public class ContentManager extends Observable {
 			this.ip = InetAddress.getByName(ip);
 			this.port = port;
 			this.name = info.getInfo().getName();
+			this.status = Status.CONNECTING;
 			this.info_hash = info.getInfo().getHexInfoHash();
 			this.size = info.getInfo().getLength();
 			this.peers = new ArrayList<PeerInfo>();
@@ -71,12 +70,10 @@ public class ContentManager extends Observable {
 			while (ClientManager.getInstance().existTransactionID(this.transactionID)) {
 				this.transactionID = random.nextInt(Integer.MAX_VALUE);
 			}
-			this.enable = true;
-			ClientManager.getInstance().addContentManager(this);
 
 			this.timerAnnounce = new Timer(3000, new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					if (enable) {
+					if (status == Status.DOWNLOADING || status == Status.WAITING_SEEDS) {
 						System.out.println("Envia announce");
 						sendAnnounce();
 					} else {
@@ -87,7 +84,7 @@ public class ContentManager extends Observable {
 
 			this.timerConnect = new Timer(5000, new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					if (enable) {
+					if (status == Status.CONNECTING) {
 						System.out.println("Envia connect");
 						sendConnect();
 					} else {
@@ -96,6 +93,7 @@ public class ContentManager extends Observable {
 				}
 			});
 			this.timerConnect.start();
+			ClientManager.getInstance().addContentManager(this);
 
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
@@ -128,6 +126,7 @@ public class ContentManager extends Observable {
 
 	public synchronized void onConnectResponseReceived(ConnectResponse connectResponse) {
 		this.timerConnect.stop();
+		this.status = Status.DOWNLOADING;
 		this.connectionID = connectResponse.getConnectionId();
 		this.timerAnnounce.start();
 	}
@@ -183,6 +182,18 @@ public class ContentManager extends Observable {
 
 	public String getStatus() {
 		return status.value;
+	}
+
+	public void setStatus(Status status) {
+		this.status = status;
+		if (status == Status.CONNECTING) {
+			this.timerConnect.start();
+		} else if (status == Status.STOPPED) {
+			this.timerConnect.stop();
+			this.timerAnnounce.stop();
+		}
+		setChanged();
+		notifyObservers();
 	}
 
 	public String getInfo_hash() {

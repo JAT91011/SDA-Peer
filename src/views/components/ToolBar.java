@@ -12,6 +12,7 @@ import java.util.regex.PatternSyntaxException;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.JToolBar;
@@ -22,6 +23,7 @@ import javax.swing.table.TableRowSorter;
 import bitTorrent.metainfo.handler.MetainfoHandler;
 import bitTorrent.metainfo.handler.MetainfoHandlerMultipleFile;
 import bitTorrent.metainfo.handler.MetainfoHandlerSingleFile;
+import models.ClientManager;
 import utilities.FileChooser;
 import views.StartPanel;
 import views.Window;
@@ -167,27 +169,43 @@ public class ToolBar extends JToolBar implements ActionListener {
 		if (startPanel.getTable().getSelectedRowCount() > 0) {
 			startPanel.removeSelectedTorrent();
 		} else {
-
+			JOptionPane.showMessageDialog(Window.getInstance(), "Select a row", "Error", JOptionPane.ERROR_MESSAGE);
 		}
 	}
 
 	private void play(StartPanel startPanel) {
-		// Se arrancan todos los torrents
-
+		// Se arrancan todos los torrents parados
+		if (!ClientManager.getInstance().playAll()) {
+			if (ClientManager.getInstance().getContentsManagers().size() > 0) {
+				JOptionPane.showMessageDialog(Window.getInstance(), "All torrents are running", "Info",
+						JOptionPane.INFORMATION_MESSAGE);
+			} else {
+				JOptionPane.showMessageDialog(Window.getInstance(), "There are not torrents downloading", "Error",
+						JOptionPane.ERROR_MESSAGE);
+			}
+		}
 	}
 
 	private void pause(StartPanel startPanel) {
 		// Se comprueba si hay alguna fila seleccionada
 		if (startPanel.getTable().getSelectedRowCount() > 0) {
 			// Se detiene el torrent
+			startPanel.pauseSelectedTorrent();
 		} else {
-
+			JOptionPane.showMessageDialog(Window.getInstance(), "Select a row", "Error", JOptionPane.ERROR_MESSAGE);
 		}
-
 	}
 
 	private void stop(StartPanel startPanel) {
-		// Se paran todos los torrents
-
+		// Se paran todos los torrents en ejecucion
+		if (!ClientManager.getInstance().stopAll()) {
+			if (ClientManager.getInstance().getContentsManagers().size() > 0) {
+				JOptionPane.showMessageDialog(Window.getInstance(), "All torrents are stopped", "Info",
+						JOptionPane.INFORMATION_MESSAGE);
+			} else {
+				JOptionPane.showMessageDialog(Window.getInstance(), "There are not torrents downloading", "Error",
+						JOptionPane.ERROR_MESSAGE);
+			}
+		}
 	}
 }

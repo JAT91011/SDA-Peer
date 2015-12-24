@@ -108,6 +108,19 @@ public class ClientManager extends Observable implements Runnable {
 		return this.contentsManagers.containsKey(transactionID);
 	}
 
+	public boolean existInfoHash(final String infoHash) {
+		for (Map.Entry<Integer, ContentManager> entry : this.contentsManagers.entrySet()) {
+			if (entry.getValue().getInfo_hash().equals(infoHash)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public ConcurrentHashMap<Integer, ContentManager> getContentsManagers() {
+		return contentsManagers;
+	}
+
 	public void removeContent(final String name) {
 		int transactionID = Integer.MIN_VALUE;
 		for (Map.Entry<Integer, ContentManager> entry : this.contentsManagers.entrySet()) {
@@ -118,6 +131,39 @@ public class ClientManager extends Observable implements Runnable {
 			}
 		}
 		this.contentsManagers.remove(transactionID);
+	}
+
+	public boolean playAll() {
+		boolean play = false;
+		for (Map.Entry<Integer, ContentManager> entry : this.contentsManagers.entrySet()) {
+			if (entry.getValue().getStatus().equals(ContentManager.Status.STOPPED.value())) {
+				entry.getValue().setStatus(ContentManager.Status.CONNECTING);
+				play = true;
+			}
+		}
+		return play;
+	}
+
+	public void pauseContent(final String name) {
+		for (Map.Entry<Integer, ContentManager> entry : this.contentsManagers.entrySet()) {
+			if (entry.getValue().getName().equals(name)) {
+				entry.getValue().setStatus(ContentManager.Status.STOPPED);
+				break;
+			}
+		}
+	}
+
+	public boolean stopAll() {
+		boolean stop = false;
+		for (Map.Entry<Integer, ContentManager> entry : this.contentsManagers.entrySet()) {
+			if (entry.getValue().getStatus().equals(ContentManager.Status.CONNECTING.value())
+					|| entry.getValue().getStatus().equals(ContentManager.Status.DOWNLOADING.value())
+					|| entry.getValue().getStatus().equals(ContentManager.Status.WAITING_SEEDS.value())) {
+				entry.getValue().setStatus(ContentManager.Status.STOPPED);
+				stop = true;
+			}
+		}
+		return stop;
 	}
 
 	public void run() {
