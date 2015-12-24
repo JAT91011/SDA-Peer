@@ -128,7 +128,6 @@ public class StartPanel extends JPanel implements Observer {
 				}
 			}
 		}
-		System.out.println("FILAS: " + peers.size());
 
 		String[][] data = new String[peers.size()][this.headerPeers.length];
 

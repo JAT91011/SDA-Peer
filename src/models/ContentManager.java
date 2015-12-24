@@ -111,7 +111,7 @@ public class ContentManager extends Observable {
 		AnnounceRequest announceRequest = new AnnounceRequest();
 		announceRequest.setConnectionId(this.connectionID);
 		announceRequest.setTransactionId(this.transactionID);
-		announceRequest.setInfoHash(this.info_hash);
+		announceRequest.setInfoHash(ByteUtils.toByteArray(this.info_hash));
 		announceRequest.setPeerId(ByteUtils.createPeerId());
 		announceRequest.setDownloaded(0);
 		announceRequest.setUploaded(0);
@@ -145,7 +145,6 @@ public class ContentManager extends Observable {
 		for (PeerInfo peer : this.peers) {
 			if (peer.getIpAddress() != 0) {
 				aux.add(peer);
-				System.out.println("LLEGA: " + peer.getPort());
 			}
 		}
 
