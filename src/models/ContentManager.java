@@ -22,11 +22,12 @@ import bitTorrent.util.ByteUtils;
 
 public class ContentManager extends Observable {
 
-	private static int ERROR_TIME_MARGIN = 500;
+	private static int	ERROR_TIME_MARGIN		= 500;
+	private static int	DOWNLOAD_SPEED_PERCENT	= 15;
 
 	public enum Status {
 		CONNECTING("Connecting..."), DOWNLOADING("Downloading"), WAITING_SEEDS("Waiting for seeds..."), STOPPED(
-				"Stopped"), SHARING("Sharing");
+				"Stopped"), COMPLETED("Completed");
 
 		private String value;
 
@@ -44,6 +45,7 @@ public class ContentManager extends Observable {
 	private String			name;
 	private Status			status;
 	private String			info_hash;
+	private long			downloaded;
 	private long			size;
 	private int				leechers;
 	private int				seeders;
@@ -63,6 +65,7 @@ public class ContentManager extends Observable {
 			this.name = info.getInfo().getName();
 			this.status = Status.CONNECTING;
 			this.info_hash = info.getInfo().getHexInfoHash();
+			this.downloaded = 0;
 			this.size = info.getInfo().getLength();
 			this.peers = new ArrayList<PeerInfo>();
 			Random random = new Random();
@@ -73,7 +76,7 @@ public class ContentManager extends Observable {
 
 			this.timerAnnounce = new Timer(3000, new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					if (status == Status.DOWNLOADING || status == Status.WAITING_SEEDS) {
+					if (status == Status.DOWNLOADING || status == Status.WAITING_SEEDS || status == Status.COMPLETED) {
 						System.out.println("Envia announce");
 						sendAnnounce();
 					} else {
@@ -113,10 +116,14 @@ public class ContentManager extends Observable {
 		announceRequest.setTransactionId(this.transactionID);
 		announceRequest.setInfoHash(ByteUtils.toByteArray(this.info_hash));
 		announceRequest.setPeerId(ByteUtils.createPeerId());
-		announceRequest.setDownloaded(0);
+		announceRequest.setDownloaded(this.downloaded);
 		announceRequest.setUploaded(0);
-		announceRequest.setLeft(this.size);
-		announceRequest.setEvent(Event.STARTED);
+		announceRequest.setLeft(this.size - this.downloaded);
+		if (this.size == this.downloaded) {
+			announceRequest.setEvent(Event.COMPLETED);
+		} else {
+			announceRequest.setEvent(Event.STARTED);
+		}
 		announceRequest.getPeerInfo().setIpAddress(0);
 		announceRequest.setKey(new Random().nextInt(Integer.MAX_VALUE));
 		announceRequest.setNumWant(-1);
@@ -149,7 +156,13 @@ public class ContentManager extends Observable {
 		}
 
 		if (announceResponse.getSeeders() > 0) {
-			this.status = Status.DOWNLOADING;
+			this.downloaded += (this.size * DOWNLOAD_SPEED_PERCENT) / 100;
+			if (this.downloaded >= this.size) {
+				this.downloaded = this.size;
+				this.status = Status.COMPLETED;
+			} else {
+				this.status = Status.DOWNLOADING;
+			}
 		} else {
 			this.status = Status.WAITING_SEEDS;
 		}
@@ -193,6 +206,10 @@ public class ContentManager extends Observable {
 		}
 		setChanged();
 		notifyObservers();
+	}
+
+	public long getDownloaded() {
+		return downloaded;
 	}
 
 	public String getInfo_hash() {

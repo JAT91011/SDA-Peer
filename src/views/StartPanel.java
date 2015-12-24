@@ -57,13 +57,14 @@ public class StartPanel extends JPanel implements Observer {
 		JScrollPane scrollPaneTop = new JScrollPane();
 		splitPane.setLeftComponent(scrollPaneTop);
 
-		headerContents = new String[6];
+		headerContents = new String[7];
 		headerContents[0] = "#";
 		headerContents[1] = "Name";
 		headerContents[2] = "Size";
 		headerContents[3] = "Status";
-		headerContents[4] = "Seeds";
-		headerContents[5] = "Peers";
+		headerContents[4] = "Downloaded";
+		headerContents[5] = "Seeds";
+		headerContents[6] = "Peers";
 
 		modelTableContents = new DefaultTableModel();
 		modelTableContents.setDataVector(null, headerContents);
@@ -177,7 +178,7 @@ public class StartPanel extends JPanel implements Observer {
 		return "";
 	}
 
-	private double bytes2MegaBytes(final int bytes) {
+	private double bytes2MegaBytes(final long bytes) {
 		return (bytes / 1024) / 1024;
 	}
 
@@ -196,8 +197,9 @@ public class StartPanel extends JPanel implements Observer {
 			}
 
 			this.tableContents.getModel().setValueAt(contentManager.getStatus(), row, 3);
-			this.tableContents.getModel().setValueAt(contentManager.getSeeders(), row, 4);
-			this.tableContents.getModel().setValueAt(contentManager.getLeechers(), row, 5);
+			this.tableContents.getModel().setValueAt(bytes2MegaBytes(contentManager.getDownloaded()) + " MB.", row, 4);
+			this.tableContents.getModel().setValueAt(contentManager.getSeeders(), row, 5);
+			this.tableContents.getModel().setValueAt(contentManager.getLeechers(), row, 6);
 			tablePeers.setModel(this.modelTablePeers);
 
 			if (this.tableContents.getSelectedRow() > -1) {
