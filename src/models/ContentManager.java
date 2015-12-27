@@ -23,7 +23,7 @@ import bitTorrent.util.ByteUtils;
 public class ContentManager extends Observable {
 
 	private static int	ERROR_TIME_MARGIN		= 500;
-	private static int	DOWNLOAD_SPEED_PERCENT	= 15;
+	private static int	DOWNLOAD_SPEED_PERCENT	= 2;
 
 	public enum Status {
 		CONNECTING("Connecting..."), DOWNLOADING("Downloading"), WAITING_SEEDS("Waiting for seeds..."), STOPPED(

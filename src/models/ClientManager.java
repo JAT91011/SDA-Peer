@@ -158,7 +158,8 @@ public class ClientManager extends Observable implements Runnable {
 		for (Map.Entry<Integer, ContentManager> entry : this.contentsManagers.entrySet()) {
 			if (entry.getValue().getStatus().equals(ContentManager.Status.CONNECTING.value())
 					|| entry.getValue().getStatus().equals(ContentManager.Status.DOWNLOADING.value())
-					|| entry.getValue().getStatus().equals(ContentManager.Status.WAITING_SEEDS.value())) {
+					|| entry.getValue().getStatus().equals(ContentManager.Status.WAITING_SEEDS.value())
+					|| entry.getValue().getStatus().equals(ContentManager.Status.COMPLETED.value())) {
 				entry.getValue().setStatus(ContentManager.Status.STOPPED);
 				stop = true;
 			}
