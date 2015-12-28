@@ -91,6 +91,8 @@ public class StartPanel extends JPanel implements Observer {
 		tableContents.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 14));
 		tableContents.setRowHeight(30);
 		tableContents.getTableHeader().setFont(new Font("Arial", Font.PLAIN, 15));
+		tableContents.getColumnModel().getColumn(0).setMinWidth(50);
+		tableContents.getColumnModel().getColumn(0).setMaxWidth(50);
 
 		JScrollPane scrollPaneBottom = new JScrollPane();
 		splitPane.setRightComponent(scrollPaneBottom);
@@ -116,6 +118,8 @@ public class StartPanel extends JPanel implements Observer {
 		tablePeers.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 14));
 		tablePeers.setRowHeight(30);
 		tablePeers.getTableHeader().setFont(new Font("Arial", Font.PLAIN, 15));
+		tablePeers.getColumnModel().getColumn(0).setMinWidth(50);
+		tablePeers.getColumnModel().getColumn(0).setMaxWidth(50);
 	}
 
 	private void updatePeersTableData() {

@@ -22,8 +22,9 @@ import bitTorrent.util.ByteUtils;
 
 public class ContentManager extends Observable {
 
-	private static int	ERROR_TIME_MARGIN		= 500;
-	private static int	DOWNLOAD_SPEED_PERCENT	= 2;
+	private static int	ERROR_TIME_MARGIN							= 500;
+	private static int	DOWNLOAD_SPEED_PERCENT						= 2;
+	private static int	MAX_ANNOUNCE_WITHOUT_RESPONSE_BEFORE_RESET	= 5;
 
 	public enum Status {
 		CONNECTING("Connecting..."), DOWNLOADING("Downloading"), WAITING_SEEDS("Waiting for seeds..."), STOPPED(
@@ -57,6 +58,8 @@ public class ContentManager extends Observable {
 	private Timer			timerAnnounce;
 	private Timer			timerConnect;
 
+	private int				numAnnounceSentWithoutResponse;
+
 	public ContentManager(final String ip, final int port, final MetainfoFile<?> info) {
 		try {
 
@@ -68,6 +71,7 @@ public class ContentManager extends Observable {
 			this.downloaded = 0;
 			this.size = info.getInfo().getLength();
 			this.peers = new ArrayList<PeerInfo>();
+			this.numAnnounceSentWithoutResponse = 0;
 			Random random = new Random();
 			this.transactionID = random.nextInt(Integer.MAX_VALUE);
 			while (ClientManager.getInstance().existTransactionID(this.transactionID)) {
@@ -75,17 +79,23 @@ public class ContentManager extends Observable {
 			}
 
 			this.timerAnnounce = new Timer(3000, new ActionListener() {
+
 				public void actionPerformed(ActionEvent e) {
 					if (status == Status.DOWNLOADING || status == Status.WAITING_SEEDS || status == Status.COMPLETED) {
-						System.out.println("Envia announce");
-						sendAnnounce();
+						if (numAnnounceSentWithoutResponse < MAX_ANNOUNCE_WITHOUT_RESPONSE_BEFORE_RESET) {
+							System.out.println("Envia announce");
+							sendAnnounce();
+							ContentManager.this.numAnnounceSentWithoutResponse++;
+						} else {
+							setStatus(Status.CONNECTING);
+						}
 					} else {
 						ContentManager.this.status = Status.STOPPED;
 					}
 				}
 			});
 
-			this.timerConnect = new Timer(5000, new ActionListener() {
+			this.timerConnect = new Timer(3000, new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					if (status == Status.CONNECTING) {
 						System.out.println("Envia connect");
@@ -136,13 +146,14 @@ public class ContentManager extends Observable {
 		this.status = Status.DOWNLOADING;
 		this.connectionID = connectResponse.getConnectionId();
 		this.timerAnnounce.start();
+		ContentManager.this.numAnnounceSentWithoutResponse = 0;
 	}
 
 	public synchronized void onAnnounceResponseReceived(AnnounceResponse announceResponse) {
 		System.out.println("Announce recibido para: " + this.name);
 		System.out
 				.println("Seeders: " + announceResponse.getSeeders() + ", Leechers: " + announceResponse.getLeechers());
-
+		ContentManager.this.numAnnounceSentWithoutResponse = 0;
 		if (this.timerAnnounce.getDelay() != (announceResponse.getInterval() + ERROR_TIME_MARGIN)) {
 			this.timerAnnounce.setDelay(announceResponse.getInterval() + ERROR_TIME_MARGIN);
 		}
@@ -200,6 +211,7 @@ public class ContentManager extends Observable {
 		this.status = status;
 		if (status == Status.CONNECTING) {
 			this.timerConnect.start();
+			this.timerAnnounce.stop();
 		} else if (status == Status.STOPPED) {
 			this.timerConnect.stop();
 			this.timerAnnounce.stop();
